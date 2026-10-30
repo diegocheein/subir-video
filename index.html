@@ -74,11 +74,23 @@
     return new Promise(function (r) { setTimeout(r, ms); });
   }
 
-  // La sesion viaja en el #fragmento; solo se acepta una de la API de subida de Drive.
-  function leerSesion() {
+  async function sha256(texto) {
+    return new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto)));
+  }
+
+  // El #fragmento es la clave que descifra s/<id>.txt; solo se acepta una sesion de la API de subida de Drive.
+  async function leerSesion() {
     try {
-      var b = location.hash.slice(1).replace(/-/g, '+').replace(/_/g, '/');
-      var url = new URL(atob(b));
+      var clave = location.hash.slice(1);
+      var ident = Array.from(await sha256(clave)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('').slice(0, 16);
+      var r = await fetch('s/' + ident + '.txt', { cache: 'no-store' });
+      if (!r.ok) return null;
+      var hex = (await r.text()).trim(), plano = '';
+      for (var i = 0; i < hex.length / 2; i++) {
+        if (i % 32 === 0) var flujo = await sha256(clave + ':' + i / 32);
+        plano += String.fromCharCode(parseInt(hex.substr(i * 2, 2), 16) ^ flujo[i % 32]);
+      }
+      var url = new URL(plano);
       if (url.protocol === 'https:' && url.hostname === 'www.googleapis.com' && url.pathname.indexOf('/upload/drive/') === 0) {
         return url.href;
       }
@@ -170,19 +182,20 @@
     return true;
   }
 
-  var sesion = leerSesion();
-  if (!sesion) {
-    fallo('El link está incompleto.');
-  } else {
+  window.__subir = subir;
+  window.__listo = leerSesion().then(function (sesion) {
+    window.__sesion = sesion;
+    if (!sesion) {
+      fallo('El link está incompleto.');
+      return;
+    }
     document.getElementById('elegir').addEventListener('click', function () {
       document.getElementById('archivo').click();
     });
     document.getElementById('archivo').addEventListener('change', function (e) {
       if (e.target.files[0]) subir(e.target.files[0], sesion);
     });
-  }
-  window.__subir = subir;
-  window.__sesion = sesion;
+  });
 </script>
 </body>
 </html>

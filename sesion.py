@@ -119,8 +119,23 @@ def nuevo(nombre):
     r = api("POST", "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable",
             {"name": nombre, "parents": [carpeta()]},
             {"Origin": ORIGEN, "X-Upload-Content-Type": "video/mp4"})
-    sesion = r.headers["Location"]
-    print(PAGINA + "#" + base64.urlsafe_b64encode(sesion.encode()).decode().rstrip("="))
+    sesion = r.headers["Location"].encode()
+    # Link corto: en el repo publico queda la sesion cifrada; la clave solo viaja en el #fragmento.
+    clave = secrets.token_urlsafe(12)
+    flujo = b""
+    while len(flujo) < len(sesion):
+        flujo += hashlib.sha256(f"{clave}:{len(flujo) // 32}".encode()).digest()
+    cifrada = bytes(a ^ b for a, b in zip(sesion, flujo)).hex()
+    ident = hashlib.sha256(clave.encode()).hexdigest()[:16]
+    repo = pathlib.Path(__file__).parent
+    destino = repo / "s" / f"{ident}.txt"
+    destino.parent.mkdir(exist_ok=True)
+    destino.write_text(cifrada)
+    subprocess.run(["git", "-C", str(repo), "add", str(destino)], check=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m",
+                    "Nueva sesion de subida\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"], check=True)
+    subprocess.run(["git", "-C", str(repo), "push", "-q"], check=True)
+    print(PAGINA + "#" + clave)
 
 
 def estado():
