@@ -15,7 +15,9 @@
   p { margin:0; }
   .aviso { font-size:24px; font-weight:600; }
   .suave { color:var(--suave); }
-  button { width:100%; min-height:96px; border:0; border-radius:16px; background:var(--boton); color:#fff; font:600 28px/1.2 inherit; font-family:inherit; cursor:pointer; }
+  button { width:100%; min-height:96px; border:0; border-radius:16px; background:var(--boton); color:#fff; font-family:inherit; font-size:28px; font-weight:600; line-height:1.2; cursor:pointer; }
+  ol { margin:16px 0 24px; padding-left:28px; }
+  li { margin-bottom:10px; }
   .barra { height:28px; background:var(--barra); border-radius:14px; overflow:hidden; }
   .barra div { height:100%; width:0; background:var(--boton); transition:width .4s; }
   .pct { font-size:56px; font-weight:700; line-height:1; font-variant-numeric:tabular-nums; }
@@ -28,7 +30,12 @@
 <main>
   <section id="inicio">
     <h1>Subir el video</h1>
-    <p style="margin:16px 0 24px">Tocá el botón y elegí el video.</p>
+    <ol>
+      <li>Tocá el botón azul de abajo.</li>
+      <li>Tocá <b>Fototeca</b>.</li>
+      <li>Tocá el video.</li>
+      <li>Tocá el <b>círculo azul con el tilde ✓</b>, arriba a la derecha.</li>
+    </ol>
     <button id="elegir" type="button">Elegir el video</button>
     <input id="archivo" type="file" accept="video/*" hidden>
   </section>
