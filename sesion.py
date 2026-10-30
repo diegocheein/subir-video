@@ -16,11 +16,16 @@ import http.server
 import json
 import pathlib
 import secrets
+import ssl
 import subprocess
 import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+
+# El Python de python.org no trae certificados: se usan los del sistema.
+urllib.request.install_opener(urllib.request.build_opener(
+    urllib.request.HTTPSHandler(context=ssl.create_default_context(cafile="/etc/ssl/cert.pem"))))
 
 CLIENT = pathlib.Path.home() / "code/gphotos-mcp/credentials/client_secret.json"
 DIR = pathlib.Path.home() / ".config/subir-video"
@@ -75,7 +80,7 @@ def login():
         "login_hint": "diego@solucionesdigitales.com.ar",
     })
     subprocess.run(["open", url], check=True)
-    print("Se abrió el navegador para autorizar. Esperando (10 min)...", flush=True)
+    print("Abrí este link para autorizar (espera 10 min):", url, flush=True)
     while "state" not in recibido:
         srv.handle_request()
         if not recibido:
